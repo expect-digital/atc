@@ -1,7 +1,7 @@
 on: [pull_request]
 name: Check
 jobs:
-  test:
+  check:
     runs-on: ${{ matrix.operating-system }}
     strategy:
       matrix:
