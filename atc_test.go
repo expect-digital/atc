@@ -15,7 +15,7 @@ A;"ALIMENTARY TRACT AND METABOLISM";"Gremošanas trakts un vielmaiņa";1
 A01;"STOMATOLOGICAL PREPARATIONS";"Stomatoloģiskie līdzekļi";2`)))
 
 	assert.NoError(t, err)
-	assert.Equal(t, []ATC{
+	assert.Equal(t, []Entry{
 		{"A", "ALIMENTARY TRACT AND METABOLISM", "Gremošanas trakts un vielmaiņa", 1},
 		{"A01", "STOMATOLOGICAL PREPARATIONS", "Stomatoloģiskie līdzekļi", 2}}, atc)
 }

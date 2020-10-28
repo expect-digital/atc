@@ -11,8 +11,8 @@ import (
 
 const url = "https://www.zva.gov.lv/zvais/zr-atc/api/atc-codes-zp/?v=csv&q="
 
-// ATC represents the Anatomical Therapeutic Chemical as published by Zāļu Valsts Aģentūra (ZVA) in Latvia.
-type ATC struct {
+// Entry represents the Anatomical Therapeutic Chemical as published by Zāļu Valsts Aģentūra (ZVA) in Latvia.
+type Entry struct {
 	Code    string
 	NameEng string // name in English
 	NameLat string // name in Latvian
@@ -35,12 +35,12 @@ func extract(ctx context.Context) (io.ReadCloser, error) {
 }
 
 // transform transforms downloaded CSV file into []ATC.
-func transform(rc io.ReadCloser) ([]ATC, error) {
+func transform(rc io.ReadCloser) ([]Entry, error) {
 	r := csv.NewReader(rc)
 	r.Comma = ';'
 
 	var (
-		atc                           []ATC
+		atc                           []Entry
 		code, nameEng, nameLat, level int
 		isColumnRow                   bool = true
 	)
@@ -55,7 +55,7 @@ func transform(rc io.ReadCloser) ([]ATC, error) {
 				return nil, fmt.Errorf("convert level to int: %v", err)
 			}
 
-			atc = append(atc, ATC{
+			atc = append(atc, Entry{
 				Code:    row[code],
 				NameLat: row[nameLat],
 				NameEng: row[nameEng],
@@ -86,7 +86,7 @@ func transform(rc io.ReadCloser) ([]ATC, error) {
 
 // Get returns []ATC - it downloads CSV file from ZVA,
 // and transforms downloaded CSV into []ATC.
-func Get(ctx context.Context) ([]ATC, error) {
+func Get(ctx context.Context) ([]Entry, error) {
 	rc, err := extract(ctx)
 	if err != nil {
 		return nil, err
