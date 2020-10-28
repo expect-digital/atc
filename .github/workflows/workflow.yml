@@ -1,5 +1,5 @@
 on: [push, pull_request]
-name: workflow
+name: Workflow
 jobs:
   test:
     runs-on: ${{ matrix.operating-system }}
@@ -7,9 +7,9 @@ jobs:
       matrix:
         operating-system: [ubuntu-latest, windows-latest, macos-latest]
     steps:
-      - name: checkout
+      - name: Checkout source
         uses: actions/checkout@v2
-      - name: go
+      - name: Go
         uses: actions/setup-go@v2
-      - name: test
-        run: go test ./...
+      - name: Test
+        run: go test -v ./...
