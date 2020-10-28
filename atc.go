@@ -84,7 +84,7 @@ func transform(rc io.ReadCloser) ([]ATC, error) {
 	}
 }
 
-// Get returns []ATC - it download CSV file from ZVA,
+// Get returns []ATC - it downloads CSV file from ZVA,
 // and transforms downloaded CSV into []ATC.
 func Get(ctx context.Context) ([]ATC, error) {
 	rc, err := extract(ctx)
