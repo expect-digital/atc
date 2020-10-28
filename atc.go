@@ -19,7 +19,7 @@ type ATC struct {
 	Level   int    // tree depth level
 }
 
-// extract sends http request to download csv file.
+// extract downloads CSV file from ZVA.
 func extract(ctx context.Context) (io.ReadCloser, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
@@ -34,6 +34,7 @@ func extract(ctx context.Context) (io.ReadCloser, error) {
 	return res.Body, nil
 }
 
+// transform transforms downloaded CSV file into []ATC.
 func transform(rc io.ReadCloser) ([]ATC, error) {
 	r := csv.NewReader(rc)
 	r.Comma = ';'
@@ -83,7 +84,8 @@ func transform(rc io.ReadCloser) ([]ATC, error) {
 	}
 }
 
-// Get loads and transforms ATC.
+// Get returns []ATC - it download CSV file from ZVA,
+// and transforms downloaded CSV into []ATC.
 func Get(ctx context.Context) ([]ATC, error) {
 	rc, err := extract(ctx)
 	if err != nil {
