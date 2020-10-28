@@ -1,0 +1,15 @@
+on: [push, pull_request]
+name: workflow
+jobs:
+  test:
+    runs-on: ${{ matrix.operating-system }}
+    strategy:
+      matrix:
+        operating-system: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: go
+        uses: actions/setup-go@v2
+      - name: test
+        run: go test ./...
