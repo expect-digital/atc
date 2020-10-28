@@ -1,5 +1,5 @@
 on: [pull_request]
-name: Workflow
+name: Check
 jobs:
   test:
     runs-on: ${{ matrix.operating-system }}

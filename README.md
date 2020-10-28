@@ -1,2 +1,1 @@
-# atc
-atc loads and transforms ATC (published by VZA in Latvia) to golang
+# Anatomical Therapeutic Chemical (ATC) [<img src="https://github.com/google/region-flags/blob/gh-pages/svg/LV.svg" width="90" height="60" alt="Latviski">](https://github.com/expect-digital/atc/README.lv.md)
