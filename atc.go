@@ -6,17 +6,19 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
+
+	"github.com/dimchansky/utfbom"
+	"github.com/jszwec/csvutil"
 )
 
 const url = "https://www.zva.gov.lv/zvais/zr-atc/api/atc-codes-zp/?v=csv&q="
 
 // Entry represents the Anatomical Therapeutic Chemical as published by Zāļu Valsts Aģentūra (ZVA) in Latvia.
 type Entry struct {
-	Code    string
-	NameEng string // name in English
-	NameLat string // name in Latvian
-	Level   int    // tree depth level
+	Code    string `csv:"code"`
+	NameEng string `csv:"name_eng"` // name in English
+	NameLat string `csv:"name_lat"` // name in Latvian, not all names have been translated into Latvian
+	Level   int    `csv:"level"`    // tree depth level
 }
 
 // extract downloads CSV file from ZVA.
@@ -34,63 +36,57 @@ func extract(ctx context.Context) (io.ReadCloser, error) {
 	return res.Body, nil
 }
 
-// transform transforms downloaded CSV file into []ATC.
-func transform(rc io.ReadCloser) ([]Entry, error) {
-	r := csv.NewReader(rc)
-	r.Comma = ';'
-
-	var (
-		atc                           []Entry
-		code, nameEng, nameLat, level int
-		isColumnRow                   bool = true
-	)
-
-	for {
-		row, err := r.Read()
-
-		switch {
-		default:
-			l, err := strconv.Atoi(row[level])
-			if err != nil {
-				return nil, fmt.Errorf("convert level to int: %v", err)
-			}
-
-			atc = append(atc, Entry{
-				Code:    row[code],
-				NameLat: row[nameLat],
-				NameEng: row[nameEng],
-				Level:   l,
-			})
-		case err == io.EOF:
-			rc.Close()
-			return atc, nil
-		case err != nil:
-			return nil, fmt.Errorf("transform atc code: %w", err)
-		case isColumnRow:
-			for i, v := range row {
-				switch v {
-				case "code":
-					code = i
-				case "name_eng":
-					nameEng = i
-				case "name_lat":
-					nameLat = i
-				case "level":
-					level = i
-				}
-			}
-			isColumnRow = false
-		}
-	}
+// bomReader helps to remove double BOM from CSV file. utfbom does
+// NOT apply second Skip() if it is already *utfbom.Reader type.
+type bomReader struct {
+	r io.Reader
 }
 
-// Get returns []ATC - it downloads CSV file from ZVA,
-// and transforms downloaded CSV into []ATC.
-func Get(ctx context.Context) ([]Entry, error) {
-	rc, err := extract(ctx)
+// Read implements io.Reader interface.
+func (b *bomReader) Read(p []byte) (n int, err error) {
+	return b.r.Read(p)
+}
+
+// transform transforms downloaded CSV file into dest slice.
+func transform(rc io.Reader, dest interface{}) error {
+	// skip double BOM in CSV file
+	r := csv.NewReader(utfbom.SkipOnly(&bomReader{r: utfbom.SkipOnly(rc)}))
+	r.Comma = ';'
+
+	d, err := csvutil.NewDecoder(r)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("create new ATC decoder: %w", err)
 	}
 
-	return transform(rc)
+	if err = d.Decode(&dest); err != nil {
+		return fmt.Errorf("decode ATC: %w", err)
+	}
+
+	return nil
+}
+
+// Get returns ATC values mapped to given dest.
+//
+// Values are mapped using csv tags https://github.com/jszwec/csvutil , please
+// check Entry struct for available csv column names.
+//
+// Every time Get is called, the CSV file is downloaded from ZVA.
+func Get(ctx context.Context, dest interface{}) error {
+	rc, err := extract(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer rc.Close()
+
+	return transform(rc, &dest)
+}
+
+// Get returns []Entry.
+//
+// Every time GetEntries is called, the CSV file is downloaded from ZVA.
+func GetEntries(ctx context.Context) ([]Entry, error) {
+	var r []Entry
+	err := Get(ctx, &r)
+	return r, err
 }
